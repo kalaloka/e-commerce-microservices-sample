@@ -85,25 +85,12 @@ kubectl apply -f full_stack_lb.yaml
 Deploying One micro service which is products-cna-microservice
 
 Dockerfile
-# Use Node.js 18 on Alpine Linux
 FROM node:18-alpine
-
-# Set the working directory inside the container
 WORKDIR /app
-
-# Copy package.json to the working directory
 COPY package.json .
-
-# Install dependencies
 RUN npm install
-
-# Copy the rest of the application code
 COPY . .
-
-# Expose the port the app runs on (e.g., 3000 if that's your app's port)
 EXPOSE 3000
-
-# Command to run the application
 CMD ["npm", "start"]
 
 docker build -t your-image-name .
@@ -114,7 +101,9 @@ docker tag products-cna-microservice:latest your-account-id.dkr.ecr.your-region.
 docker push your-account-id.dkr.ecr.your-region.amazonaws.com/products-cna-microservice:latest
 
 Create Kubernetes Manifests
+
 Deployment.yml
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -147,6 +136,7 @@ spec:
               key: database
 
 service.yml
+
 apiVersion: v1
 kind: Service
 metadata:
@@ -160,7 +150,9 @@ spec:
     port: 80
     targetPort: 3000
 
+
 Ingress.yml
+
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -185,6 +177,7 @@ spec:
             port:
               number: 80
         
+
 Secret & ConfigMap:
 secret
 apiVersion: v1
