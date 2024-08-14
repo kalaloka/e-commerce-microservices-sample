@@ -1,54 +1,93 @@
-# Sample E-Commerce application using Microservices / Cloud Native Architecture (CNA)
-**_A fictitious e-commerce sample application built using modern technologies and  Microservices & Cloud Native Architecture patterns._**
-- **Polyglot Languages & Frameworks** (Java - Spring Boot/Cloud, Python - FastAPI, SQLAlachamey, JavaScript/TypeScript - Node, ExpressJS, React)
-- **Polyglot Databases** (MongoDB, Redis, ElastiSearch, PostgreSQL)
-- Able to deploy to **local Kubernetes (k8s) cluster** as containers (Docker) and also to **Public Cloud (AWS)**.
+IAM
+Create a user “eks-admin” with AdministratorAccess
+Create Security Credentials Access Key and Secret access key 
 
-This is an end-to-end **e-commerce solution** that demonstrates how to build a moder CNA application using microservices architecture with full-stack technologies. This application includes below functional microservices which are independently deployable with bounded context.
+EC2
 
-_You can standup application locally on your laptop/desktop with few steps and also to AWS._
+Create an ubuntu instance (region us-west-2)
 
-## App -  UI/UX, Architecture & Technologies Used
+ssh to the instance from local
 
-Architecture         |  Application UI/UX
-:-------------------------:|:-------------------------:
-<img src="architecture.png" alt="Architecture"> | <img src="app-showcase.png" alt="Application UI"> 
+Install AWS CLI v2
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+sudo apt install unzip
+unzip awscliv2.zip
+sudo ./aws/install -i /usr/local/aws-cli -b /usr/local/bin --update
 
-## Functional Microservices
-| Microservice  | Description | Technologies Used |
-| --- | --- | --- |
-| [Product Catalog Microservice](products-cna-microservice/README.md) | Provides e-commerce merchandise information and images. | A REST API built using NodeJS, ExpressJS relies MongoDB as a data store. | 
-| [Shopping Cart Microservice](cart-cna-microservice/README.md) |  A Microservice with shopping cart and checkout features. | A REST API built using Spring Boot & Cloud with Gradle as build tool, leverages Redis as in-memory data store. |
-| [User Profile Microservice](users-cna-microservice/README.md) | User profile management, account and more. | A REST API built using Python FastAPI and SQLAlchamey used PostreSQL   |
-| [Search Microservice](search-cna-microservice/README.md) | Enables seach functionality such as auto complete, typeahead, faceted search features | A proxy to ElasticSearch, leverages Node|
-| [Store UI](store-ui/README.md) | A web UI frontend for e-commerce store that uses above Microservices | A web app built using React, Material UI using TypeScript/JavaScript|
+Setup your access by
 
-## Folder Structure
-```bash
-.
-├── store-ui                    # Web Store Ract App with Material UI
-│   └── ...
-├── cart-cna-microservice       # Shopping Cart Microservice repository
-├── products-cna-microservice   # Product Catalog Microservice folder
-├── search-cna-microservice     # Search Microservice
-├── users-cna-microservice      # User Profile Management Microservice
-├── users-cna-microservice      # User Profile Management Microservice
-├── store-ui                    # Web Store Ract App with Material UI
-└── infra                       # Infrastructure scripts to setup app locally & cloud
-    ├── k8s                     # Kubernetes (k8s) YAML files
-    │    └── apps               # Microservices related k8s yaml files.
-    │    └── shared-services    # Databases, ElasticSeach related k8s yaml files.
-    ├── terraform               # Terraform scripts to deploy to AWS
-    └── performance             # Performance and load testing scripts
-```
 
-## Getting Started
+aws configure
 
-### Build
-Go through detailed instructions specified in README.md file of each microservice.
 
-### Deploy
-Refer to [instructions](infra/README.md) to deploy application and dependent services such as MongoDB, Redis, ... either to local machine or AWS.
+Install Docker
 
-## Issues & Feedback
-Raise an issue in Github. Will address as soon as possible.
+sudo apt-get update
+sudo apt install docker.io
+docker ps
+sudo chown $USER /var/run/docker.sock
+
+Install kubectl
+curl -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/kubectl
+chmod +x ./kubectl
+sudo mv ./kubectl /usr/local/bin
+kubectl version --short --client
+
+
+
+Install eksctl
+
+curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+sudo mv /tmp/eksctl /usr/local/bin
+eksctl version
+
+Setup EKS Cluster
+
+
+eksctl create cluster --name three-tier-cluster --region us-west-2 --node-type t2.medium --nodes-min 2 --nodes-max 2
+aws eks update-kubeconfig --region us-west-2 --name three-tier-cluster
+kubectl get nodes
+
+
+Run Manifests
+kubectl create namespace two-tier-ns
+kubectl apply -f .
+Kubectl delete -f .
+
+
+eksctl delete cluster --name my-cluster --region us-west-2
+
+
+Install AWS Load Balancer
+
+curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.5.4/docs/install/iam_policy.json
+
+aws iam create-policy     --policy-name AWSLoadBalancerControllerIAMPolicy     --policy-document file://iam_policy.json
+
+eksctl utils associate-iam-oidc-provider --region=us-west-2 --cluster=my-cluster --approve
+
+eksctl create iamserviceaccount   --cluster=my-cluster   --namespace=kube-system   --name=aws-load-balancer-controller   --role-name AmazonEKSLoadBalancerControllerRole   --attach-policy-arn=arn:aws:iam::626072240565:policy/AWSLoadBalancerControllerIAMPolicy --approve --region=us-west-2
+
+
+
+sudo snap install helm --classic
+
+helm repo add eks https://aws.github.io/eks-charts
+
+helm repo update eks
+
+helm install aws-load-balancer-controller eks/aws-load-balancer-controller   -n kube-system   --set clusterName=my-cluster   --set serviceAccount.create=false   --set serviceAccount.name=aws-load-balancer-controller
+
+kubectl get deployment -n kube-system aws-load-balancer-controller
+
+
+kubectl apply -f full_stack_lb.yaml
+
+
+
+
+
+
+
+
+
